@@ -12,7 +12,10 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <pwd.h>
 
 #define BRIGHTBLUE "\x1b[34;1m"
 #define DEFAULT    "\x1b[0m"
@@ -37,13 +40,40 @@ volatile sig_atomic_t signal_val = 0;
  * 
  * int chdir(const char * path) 
  */ 
-int cd (char *command){
-    printf("Inside cd fucntion \n");
-    int index = 0;
-    while (command[index] == SPACE) index ++; //Skips any spaces before a command
-    index = index + 2;// skips past the "cd" command 
-    chdir("~");
-    return EXIT_SUCCESS;
+void cd (char *command, int index, char* cwd){
+    
+    index = index + 2;
+    while (command[index] == SPACE) index ++; //skips any spaces 
+    
+    if((command[index] == NEWLINE) || (command[index] == '~' && command[index + 1] == NEWLINE)){ // go to ~
+    	printf("only cd \n");
+    	uid_t uid = getuid(); // Get the user ID of the current user
+    	struct passwd *pw = getpwuid(uid); // Get the password entry for the user
+	
+	if (pw == NULL) {
+        		printf("Error: Cannot get current working directory. %s.\n", strerror(errno));
+        	}
+        	
+        	int result1 = chdir(pw->pw_dir); //changes to parent directory
+
+    	//int result1 = chdir("/home/user");
+        	if(result1 == -1){ //couldnt change it to ' '
+        		printf("Error: Cannot change directory to ' '. %s. \n", strerror(errno));
+        	}
+   }
+    else{
+    	printf("specific command\n");
+    	char *dir = &command[index];
+         char *fullpath = malloc(strlen(cwd) + strlen(dir) + 2); // 1 for '/', 1 for null terminator
+         sprintf(fullpath, "%s/%s", cwd, dir); // construct full path
+ 
+         int result = chdir(fullpath);
+         if (result == -1) {
+             printf("Error: Cannot change directory to '%s'. %s.\n", fullpath, strerror(errno));
+         }
+
+         free(fullpath);
+    }
 }
 
 
@@ -83,8 +113,11 @@ int main (){
         
         //Checks for "cd" command
         if ((user_cmd[index] == LCASE_C) && (user_cmd[index + 1] == LCASE_D)){
-            printf("Inside cd if statment \n");
-            cd(user_cmd);
+        	   
+        	   cd(user_cmd, index, current_working_directory);
+        	   
+        	
+            //cd(user_cmd); //calls function to deal with cd
         }
 
         //Checks for "exit" command
