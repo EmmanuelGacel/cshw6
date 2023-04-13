@@ -61,17 +61,47 @@ void cd (char *command, int index, char* cwd){
         		printf("Error: Cannot change directory to ' '. %s. \n", strerror(errno));
         	}
    }
+   else if(command[index] == '.' && command[index + 1] == '.'){
+   	
+   	printf(".. portion\n");
+   	char *prev = malloc(strlen(cwd) + 1); // allocate memory for previous path
+    	strcpy(prev, cwd); // copy current working directory to previous path
+    
+    	// find the last path component by searching backwards for '/'
+    	int i = strlen(prev) - 1;
+    	while (i >= 0 && prev[i] != '/') {
+        		i--;
+    	}
+    
+    	if (i >= 0) { 		
+        	   prev[i] = '\0';
+    	}
+    
+    	int result = chdir(prev); // change directory to previous path
+    
+    	if (result == -1) { // couldn't change to previous path
+        	printf("Error: Cannot change directory to '%s'. %s.\n", prev, strerror(errno));
+    	}
+    	
+    	
+    	free(prev); // free memory for previous path
+   }
     else{
-    	printf("specific command\n");
     	char *dir = &command[index];
-         char *fullpath = malloc(strlen(cwd) + strlen(dir) + 2); // 1 for '/', 1 for null terminator
-         sprintf(fullpath, "%s/%s", cwd, dir); // construct full path
- 
+         char *fullpath = malloc(strlen(cwd) + strlen(dir) + 2);// 1 for '/', 1 for null terminator
+         fullpath[0] = '\0'; //make sure its empty before using strcat
+         
+         strcat(fullpath, cwd);
+         strcat(fullpath, "/");
+         strcat(fullpath, dir);
+         
+         fullpath[(strlen(fullpath) - 1)] = '\0'; //null terminate it
+
          int result = chdir(fullpath);
          if (result == -1) {
              printf("Error: Cannot change directory to '%s'. %s.\n", fullpath, strerror(errno));
          }
-
+         
          free(fullpath);
     }
 }
