@@ -148,10 +148,7 @@ int main (){
         	   
         	
             //cd(user_cmd); //calls function to deal with cd
-        }
-
-        //Checks for "exit" command
-        if ((user_cmd[index] == LCASE_E) && (user_cmd[index + 1] == LCASE_X) 
+        }else if ((user_cmd[index] == LCASE_E) && (user_cmd[index + 1] == LCASE_X)  //Checks for "exit" command
         && (user_cmd[index + 2] == LCASE_I) && (user_cmd[index + 3] == LCASE_T)){
             printf("Inside exit if statment \n");
             
@@ -165,11 +162,41 @@ int main (){
                 goto END; // If a ' ' or a '\n' character exit.
             }
             
+        }else{//Part 4
+        /*
+            for(int i = 0; i < PATH_MAX; i++){ //Replaces all spaces and newlines with '\0'
+                if (user_cmd[i] == SPACE || (user_cmd[index] == NEWLINE))
+                 putc(user_cmd[i], NULL);
+            }
+            int t_index = 0;
+            char **tokens = malloc((PATH_MAX/2) * sizeof(char *)); //Array of tokens used as argv
+            if (tokens = NULL){
+                fprintf(stderr, "Failed to tokenize\n");
+                return EXIT_FAILURE;
+            }
+            while((t_index < PATH_MAX / 2) && (index < PATH_MAX)){
+                int size = strlen(user_cmd[index]);//Size of token
+                tokens[t_index] = (char *) malloc(size + 1);//Malloc size of token
+                strcopy(tokens[t_index], user_cmd[index]);//Copy data into token
+                index = index + size;//(maybe + 1) Incriments index past the read token
+                while(user_cmd[index] == NULL) index++; //Incriments user_cmd to the next token
+                t_index ++;//Incriments the token array.
+            }
+
+            pid_t child_pid;
+
+            if ((child_pid = fork()) == 0){//Child process
+                if (execvp(tokens[0], tokens) == -1){//Execvp command using tokens array
+                    fprintf(stderr, "Error: exec() failed. %s.\n", strerror(errno));
+                    return EXIT_FAILURE;
+                }
+            }
+            else{
+                waitpid(child_pid);//Wait for the child process to terminate
+
+            }
+            */
         }
-
-
-        
-        
         
         
         printf("Made It!!! \n");
