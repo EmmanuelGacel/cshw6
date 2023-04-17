@@ -35,7 +35,10 @@ volatile sig_atomic_t signal_val = 0;
 
 
 void catch_signal(int sig){
-	signal_val = sig;
+	if(sig == SIGINT){
+		signal_val = 1;
+		printf("\n");
+	}
 }
 
 /**
@@ -155,23 +158,30 @@ void cd (char *command, int index, char* cwd){
 
 int main (){
     
-    struct sigaction action;
-    memset(&action, 0, sizeof(struct sigaction));
-    action.sa_handler = catch_signal;
     
-    if (sigaction(SIGINT, &action, NULL) == -1) {
-	perror("sigaction(SIGINT)");
-	return EXIT_FAILURE;
-    }
+    /*
     if (sigaction(SIGTERM, &action, NULL) == -1) {
 	perror("sigaction(SIGTERM)");
 	return EXIT_FAILURE;
     }
+    **/
+    
+ 
     
     char current_working_directory[PATH_MAX];
     
     while (true){ //While true keep printing the command line
         //Stores the cd inside the $current_working_directory buffer
+        
+        struct sigaction action;
+    	memset(&action, 0, sizeof(struct sigaction));
+    	action.sa_handler = catch_signal;
+    
+    	if (sigaction(SIGINT, &action, NULL) == -1) {
+		perror("sigaction(SIGINT)");
+		continue;
+    	}
+        
         if(getcwd(current_working_directory, PATH_MAX) == NULL){
             fprintf(stderr, "Error reading CWD: %d\n", errno);
             return EXIT_FAILURE;
@@ -202,7 +212,7 @@ int main (){
         while (user_cmd[index] == SPACE) index ++; //Skips any spaces before a command
         
         //Checks for "cd" command
-        if ((user_cmd[index] == LCASE_C) && (user_cmd[index + 1] == LCASE_D) && (user_cmd[index + 2] == ' ')){
+        if ((user_cmd[index] == LCASE_C) && (user_cmd[index + 1] == LCASE_D) && ((user_cmd[index + 2] == NEWLINE) || (user_cmd[index + 2] == ' '))){
         	   
         	   cd(user_cmd, index, current_working_directory);
         	   
