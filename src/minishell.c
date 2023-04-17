@@ -15,6 +15,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <pwd.h>
 
 #define BRIGHTBLUE "\x1b[34;1m"
@@ -162,25 +163,33 @@ int main (){
                 goto END; // If a ' ' or a '\n' character exit.
             }
             
-        }else{//Part 4
-        /*
+        }else{
+            char * pointer = user_cmd;
+            pointer = pointer + index;
+
             for(int i = 0; i < PATH_MAX; i++){ //Replaces all spaces and newlines with '\0'
-                if (user_cmd[i] == SPACE || (user_cmd[index] == NEWLINE))
-                 putc(user_cmd[i], NULL);
+                if (user_cmd[i] == SPACE || (user_cmd[i] == NEWLINE)) user_cmd[i] = '\0';
             }
+
             int t_index = 0;
-            char **tokens = malloc((PATH_MAX/2) * sizeof(char *)); //Array of tokens used as argv
-            if (tokens = NULL){
+            char **tokens; ; //Array of tokens to be used as argv
+            if ((tokens = malloc((PATH_MAX/2) * sizeof(char *))) == NULL){
                 fprintf(stderr, "Failed to tokenize\n");
                 return EXIT_FAILURE;
             }
+
             while((t_index < PATH_MAX / 2) && (index < PATH_MAX)){
-                int size = strlen(user_cmd[index]);//Size of token
-                tokens[t_index] = (char *) malloc(size + 1);//Malloc size of token
-                strcopy(tokens[t_index], user_cmd[index]);//Copy data into token
-                index = index + size;//(maybe + 1) Incriments index past the read token
-                while(user_cmd[index] == NULL) index++; //Incriments user_cmd to the next token
+                char * word = user_cmd;
+                word = word + index;
+                tokens[t_index] = (char *) malloc(strlen(word) + 1);//Malloc size of tokend
+                strcpy(tokens[t_index], word); 
+                index = index + strlen(word);
+                while(user_cmd[index] == '\0') index++; //Incriments user_cmd to the next token
                 t_index ++;//Incriments the token array.
+            }
+
+            for(int j = 0; j < (PATH_MAX/2); j++){
+                if (tokens[j] != 0) printf("Token %d: %s\n", j, tokens[j]);
             }
 
             pid_t child_pid;
@@ -192,10 +201,10 @@ int main (){
                 }
             }
             else{
-                waitpid(child_pid);//Wait for the child process to terminate
-
+                waitpid(child_pid, NULL, 0);//Wait for the child process to terminate
+                printf("Inside Parent\n");
             }
-            */
+
         }
         
         
