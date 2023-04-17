@@ -34,7 +34,9 @@
 volatile sig_atomic_t signal_val = 0;
 
 
-
+void catch_signal(int sig){
+	signal_val = sig;
+}
 
 /**
  * Incomplete CD function
@@ -52,15 +54,54 @@ void cd (char *command, int index, char* cwd){
     	struct passwd *pw = getpwuid(uid); // Get the password entry for the user
 	
 	if (pw == NULL) {
-        		printf("Error: Cannot get current working directory. %s.\n", strerror(errno));
-        	}
+        	printf("Error: Cannot get current working directory. %s.\n", strerror(errno));
+        }
         	
-        	int result1 = chdir(pw->pw_dir); //changes to parent directory
+        int result1 = chdir(pw->pw_dir); //changes to parent directory
 
     	//int result1 = chdir("/home/user");
-        	if(result1 == -1){ //couldnt change it to ' '
-        		printf("Error: Cannot change directory to ' '. %s. \n", strerror(errno));
-        	}
+        if(result1 == -1){ //couldnt change it to ' '
+        	printf("Error: Cannot change directory to ' '. %s. \n", strerror(errno));
+        }
+        
+        
+   }
+   else if((command[index] == '~' && command[index + 1] != NEWLINE)){ // ~/path entries
+   	
+   	
+    	uid_t uid = getuid(); // Get the user ID of the current user
+    	struct passwd *pw = getpwuid(uid); // Get the password entry for the user
+	
+	if (pw == NULL) {
+        	printf("Error: Cannot get current working directory. %s.\n", strerror(errno));
+        }
+        
+        char *dir = &command[index + 1]; //get past the '~'
+        //strcat(fullpath, cwd);
+        //strcat(fullpath, "/");
+        //strcat(fullpath, dir);
+         
+        
+        char *fullpath = malloc(strlen(pw->pw_dir) + strlen(dir) + 1); 
+        fullpath[0] = '\0';
+        //memset(fullpath, 0, strlen(pw->pw_dir) + strlen(dir) + 1);
+        
+        strcat(fullpath, pw->pw_dir);
+        strcat(fullpath, dir); //dir should contain the '/' already
+        
+        char *eoln = strchr(fullpath, '\n');
+        if(eoln != NULL){
+        	*eoln = '\0'; //overwrite
+        }
+        
+        int result0 = chdir(fullpath); //changes to parent directory
+
+    	//int result1 = chdir("/home/user");
+        if(result0 == -1){ //couldnt change it to ' '
+        	printf("Error: Cannot change directory to '%s'. %s. \n", fullpath, strerror(errno));
+        }
+        
+        free(fullpath);
    }
    else if(command[index] == '.' && command[index + 1] == '.'){
    	
@@ -84,11 +125,10 @@ void cd (char *command, int index, char* cwd){
         	printf("Error: Cannot change directory to '%s'. %s.\n", prev, strerror(errno));
     	}
     	
-    	
     	free(prev); // free memory for previous path
    }
     else{
-    	char *dir = &command[index];
+    	 char *dir = &command[index];
          char *fullpath = malloc(strlen(cwd) + strlen(dir) + 2);// 1 for '/', 1 for null terminator
          fullpath[0] = '\0'; //make sure its empty before using strcat
          
@@ -96,7 +136,12 @@ void cd (char *command, int index, char* cwd){
          strcat(fullpath, "/");
          strcat(fullpath, dir);
          
-         fullpath[(strlen(fullpath) - 1)] = '\0'; //null terminate it
+         char *eoln = strchr(fullpath, '\n');
+         if(eoln != NULL){
+         	*eoln = '\0'; //overwrite
+         }
+         
+         //fullpath[(strlen(fullpath) - 1)] = '\0'; //get rid of newline
 
          int result = chdir(fullpath);
          if (result == -1) {
@@ -110,8 +155,22 @@ void cd (char *command, int index, char* cwd){
 
 int main (){
     
+    struct sigaction action;
+    memset(&action, 0, sizeof(struct sigaction));
+    action.sa_handler = catch_signal;
+    
+    if (sigaction(SIGINT, &action, NULL) == -1) {
+	perror("sigaction(SIGINT)");
+	return EXIT_FAILURE;
+    }
+    if (sigaction(SIGTERM, &action, NULL) == -1) {
+	perror("sigaction(SIGTERM)");
+	return EXIT_FAILURE;
+    }
+    
+    char current_working_directory[PATH_MAX];
+    
     while (true){ //While true keep printing the command line
-        char current_working_directory[PATH_MAX];
         //Stores the cd inside the $current_working_directory buffer
         if(getcwd(current_working_directory, PATH_MAX) == NULL){
             fprintf(stderr, "Error reading CWD: %d\n", errno);
@@ -143,7 +202,7 @@ int main (){
         while (user_cmd[index] == SPACE) index ++; //Skips any spaces before a command
         
         //Checks for "cd" command
-        if ((user_cmd[index] == LCASE_C) && (user_cmd[index + 1] == LCASE_D)){
+        if ((user_cmd[index] == LCASE_C) && (user_cmd[index + 1] == LCASE_D) && (user_cmd[index + 2] == ' ')){
         	   
         	   cd(user_cmd, index, current_working_directory);
         	   
