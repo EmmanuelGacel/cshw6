@@ -75,7 +75,7 @@ void cd (char *command, int index, char* cwd){
     	struct passwd *pw = getpwuid(uid); // Get the password entry for the user
 	
 	if (pw == NULL) {
-        	printf("Error: Cannot get current working directory. %s.\n", strerror(errno));
+        	printf("Error: Cannot get passwd entry. %s.\n", strerror(errno));
         }
         
         char *dir = &command[index + 1]; //get past the '~'
