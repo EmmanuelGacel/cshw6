@@ -41,6 +41,16 @@ void catch_signal(int sig){
 	}
 }
 
+int free_tokens(char** tokens){
+    int index = PATH_MAX/2;
+    while (index >= 0){
+        free(tokens[index]);
+        index --;
+    }
+    free(tokens);
+    return EXIT_SUCCESS;
+}
+
 /**
  * Incomplete CD function
  * 
@@ -190,6 +200,7 @@ int main (){
 		catch_signal(SIGINT);
     }
     
+    
     while (true){ //While true keep printing the command line
         //Stores the cd inside the $current_working_directory buffer
         
@@ -201,7 +212,7 @@ int main (){
 	}
         
         if(getcwd(current_working_directory, PATH_MAX) == NULL){
-            fprintf(stderr, "Error reading CWD: %d\n", errno);
+            fprintf(stderr, "Error: Cannot get current working directory. %s.\n", strerror(errno));
             return EXIT_FAILURE;
         }
 
@@ -209,8 +220,11 @@ int main (){
         printf("[%s]$ ", current_working_directory);//Prints the cwd
         printf(DEFAULT);
         fflush(stdout);//Flushes the print stream
-
-        char * user_cmd = malloc(PATH_MAX);
+        char * user_cmd;
+        if((user_cmd = malloc(PATH_MAX)) == NULL){
+            fprintf(stderr, "Error: malloc() failed. %s.\n", strerror(errno));
+            return EXIT_FAILURE;
+        }
         //Stores the user input into $user_cmd buffer
         if (fgets(user_cmd, PATH_MAX, stdin) == NULL){
            if(signal_val == 1){ //CHECKS FOR A SIGNAL AFTER READING
@@ -246,14 +260,13 @@ int main (){
             //If not a ' ' character and if not a '\n' character move on to exec.
             if (user_cmd[index + 4] != SPACE &&  user_cmd[index + 4] != NEWLINE){
                 if (isascii(user_cmd[index + 4]) != 0){
-                    printf("ascii: %c \n", user_cmd[index + 4]);
-                    printf("Not a valied 'exit' --> moving to exec");
+                    goto INVALID_EXIT;
                 }
             }else{
                 goto END; // If a ' ' or a '\n' character exit.
             }
-            
         }else{
+            INVALID_EXIT: ;
             char * pointer = user_cmd;
             pointer = pointer + index;
 
@@ -264,37 +277,45 @@ int main (){
             int t_index = 0;
             char **tokens; ; //Array of tokens to be used as argv
             if ((tokens = malloc((PATH_MAX/2) * sizeof(char *))) == NULL){
-                fprintf(stderr, "Failed to tokenize\n");
+                fprintf(stderr, "Error: malloc() failed. %s.\n", strerror(errno));
                 return EXIT_FAILURE;
             }
 
             while((t_index < PATH_MAX / 2) && (index < PATH_MAX)){
                 char * word = user_cmd;
                 word = word + index;
-                tokens[t_index] = (char *) malloc(strlen(word) + 1);//Malloc size of tokend
+                if((tokens[t_index] = (char *) malloc(strlen(word) + 1)) == NULL){ //Malloc size of tokens
+                    fprintf(stderr, "Error: malloc() failed. %s.\n", strerror(errno));
+                    return EXIT_FAILURE;
+                }
                 strcpy(tokens[t_index], word); 
                 index = index + strlen(word);
                 while(user_cmd[index] == '\0') index++; //Incriments user_cmd to the next token
                 t_index ++;//Incriments the token array.
             }
-
+            /*
             for(int j = 0; j < (PATH_MAX/2); j++){
                 if (tokens[j] != 0) printf("Token %d: %s\n", j, tokens[j]);
             }
-
+            */
             pid_t child_pid;
-
-            if ((child_pid = fork()) == 0){//Child process
+            if ((child_pid = fork()) < 0){
+                fprintf(stderr, "Error: fork() failed. %s.\n", strerror(errno));
+            }else if (child_pid == 0){//Child process
                 if (execvp(tokens[0], tokens) == -1){//Execvp command using tokens array
                     fprintf(stderr, "Error: exec() failed. %s.\n", strerror(errno));
                     return EXIT_FAILURE;
                 }
-            }
-            else{
-                waitpid(child_pid, NULL, 0);//Wait for the child process to terminate
+            }else if (child_pid > 0){
+                
+                if (waitpid(child_pid, NULL, 0) == -1){//Wait for the child process to terminate
+                    fprintf(stderr, "Error: wait() failed. %s.\n", strerror(errno));                 
+                }
                 printf("Inside Parent\n");
+                free_tokens(tokens);
+                free(user_cmd);
             }
-	
+
         }
         
         
