@@ -159,28 +159,26 @@ void cd (char *command, int index, char* cwd){
 int main (){
     
     
-    /*
-    if (sigaction(SIGTERM, &action, NULL) == -1) {
-	perror("sigaction(SIGTERM)");
-	return EXIT_FAILURE;
-    }
-    **/
-    
- 
-    
     char current_working_directory[PATH_MAX];
+    
+    struct sigaction action;
+    memset(&action, 0, sizeof(struct sigaction));
+    action.sa_handler = catch_signal;
+    
+    if (sigaction(SIGINT, &action, NULL) == -1) {
+		perror("sigaction(SIGINT)");
+		catch_signal(SIGINT);
+    }
     
     while (true){ //While true keep printing the command line
         //Stores the cd inside the $current_working_directory buffer
         
-        struct sigaction action;
-    	memset(&action, 0, sizeof(struct sigaction));
-    	action.sa_handler = catch_signal;
-    
-    	if (sigaction(SIGINT, &action, NULL) == -1) {
-		perror("sigaction(SIGINT)");
+        if (signal_val == 1) { //is true
+		//printf("inside sigint statement");
+		signal_val = 0;
+		printf("\n");
 		continue;
-    	}
+	}
         
         if(getcwd(current_working_directory, PATH_MAX) == NULL){
             fprintf(stderr, "Error reading CWD: %d\n", errno);
@@ -194,7 +192,10 @@ int main (){
 
         char * user_cmd = malloc(PATH_MAX);
         //Stores the user input into $user_cmd buffer
-        if (fgets(user_cmd, PATH_MAX, stdin) == NULL){ 
+        if (fgets(user_cmd, PATH_MAX, stdin) == NULL){
+           if(signal_val == 1){ //CHECKS FOR A SIGNAL AFTER READING
+           	continue;
+           } 
            if (errno == EINTR){
                 printf("Read interrupted. \n");
                 errno = 0;
@@ -273,11 +274,11 @@ int main (){
                 waitpid(child_pid, NULL, 0);//Wait for the child process to terminate
                 printf("Inside Parent\n");
             }
-
+	
         }
         
         
-        printf("Made It!!! \n");
+        //printf("Made It!!! \n");
 
         
 
@@ -286,8 +287,6 @@ int main (){
     }
     END:
         return EXIT_SUCCESS;
-
-    //if(user_cmd[])
     
 }
 
