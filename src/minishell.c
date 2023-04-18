@@ -52,12 +52,12 @@ void cd (char *command, int index, char* cwd){
     while (command[index] == SPACE) index ++; //skips any spaces 
     
     if((command[index] == NEWLINE) || (command[index] == '~' && command[index + 1] == NEWLINE)){ // go to ~
-    	printf("only cd \n");
+    	//printf("only cd \n");
     	uid_t uid = getuid(); // Get the user ID of the current user
     	struct passwd *pw = getpwuid(uid); // Get the password entry for the user
 	
 	if (pw == NULL) {
-        	printf("Error: Cannot get current working directory. %s.\n", strerror(errno));
+        	printf("Error: Cannot get passwd entry. %s.\n", strerror(errno));
         }
         	
         int result1 = chdir(pw->pw_dir); //changes to parent directory
@@ -71,7 +71,6 @@ void cd (char *command, int index, char* cwd){
    }
    else if((command[index] == '~' && command[index + 1] != NEWLINE)){ // ~/path entries
    	
-   	
     	uid_t uid = getuid(); // Get the user ID of the current user
     	struct passwd *pw = getpwuid(uid); // Get the password entry for the user
 	
@@ -84,8 +83,11 @@ void cd (char *command, int index, char* cwd){
         //strcat(fullpath, "/");
         //strcat(fullpath, dir);
          
-        
-        char *fullpath = malloc(strlen(pw->pw_dir) + strlen(dir) + 1); 
+        char *fullpath;
+        if ((fullpath = malloc(strlen(pw->pw_dir) + strlen(dir) + 1)) == NULL){ //saves space on heap
+        	printf("Error: malloc() failed. %s.\n",
+                strerror(errno));
+    	}
         fullpath[0] = '\0';
         //memset(fullpath, 0, strlen(pw->pw_dir) + strlen(dir) + 1);
         
@@ -108,8 +110,14 @@ void cd (char *command, int index, char* cwd){
    }
    else if(command[index] == '.' && command[index + 1] == '.'){
    	
-   	printf(".. portion\n");
-   	char *prev = malloc(strlen(cwd) + 1); // allocate memory for previous path
+   	//printf(".. portion\n");
+   	
+   	char *prev;
+   	
+   	if ((prev = malloc(strlen(cwd) + 1)) == NULL){ //saves space on heap
+        	printf("Error: malloc() failed. %s.\n",
+                strerror(errno));
+    	}
     	strcpy(prev, cwd); // copy current working directory to previous path
     
     	// find the last path component by searching backwards for '/'
@@ -132,7 +140,18 @@ void cd (char *command, int index, char* cwd){
    }
     else{
     	 char *dir = &command[index];
-         char *fullpath = malloc(strlen(cwd) + strlen(dir) + 2);// 1 for '/', 1 for null terminator
+    	 
+    	 if (strchr(dir, ' ') != NULL) {
+        	printf("Error: Too many arguments to cd.\n");
+        	return;
+         }
+         
+         char *fullpath;
+         if ((fullpath = malloc(strlen(cwd) + strlen(dir) + 2)) == NULL){ // 1 for '/', 1 for null terminator
+        	printf("Error: malloc() failed. %s.\n",
+                strerror(errno));
+    	 }
+         
          fullpath[0] = '\0'; //make sure its empty before using strcat
          
          strcat(fullpath, cwd);
@@ -143,6 +162,7 @@ void cd (char *command, int index, char* cwd){
          if(eoln != NULL){
          	*eoln = '\0'; //overwrite
          }
+         
          
          //fullpath[(strlen(fullpath) - 1)] = '\0'; //get rid of newline
 
