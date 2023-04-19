@@ -61,6 +61,13 @@ void cd (char *command, int index, char* cwd){
     index = index + 2;
     while (command[index] == SPACE) index ++; //skips any spaces 
     
+    char *test = &command[index];
+    
+    if (strchr(test, ' ') != NULL) { //there are spaces after, indicating multiple arguments
+        	printf("Error: Too many arguments to cd.\n");
+        	return;
+    }
+    
     if((command[index] == NEWLINE) || (command[index] == '~' && command[index + 1] == NEWLINE)){ // go to ~
     	//printf("only cd \n");
     	uid_t uid = getuid(); // Get the user ID of the current user
@@ -166,10 +173,6 @@ void cd (char *command, int index, char* cwd){
     else{
     	 char *dir = &command[index];
     	 
-    	 if (strchr(dir, ' ') != NULL) {
-        	printf("Error: Too many arguments to cd.\n");
-        	return;
-         }
          
          char *fullpath;
          if ((fullpath = malloc(strlen(cwd) + strlen(dir) + 2)) == NULL){ // 1 for '/', 1 for null terminator
