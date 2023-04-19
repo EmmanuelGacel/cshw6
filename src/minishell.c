@@ -79,6 +79,22 @@ void cd (char *command, int index, char* cwd){
         
         
    }
+   else if(command[index] == '/'){ //case of cd /dir
+   	
+   	char *dir = &command[index];
+   	
+   	char *eoln = strchr(dir, '\n');
+        if(eoln != NULL){
+        	*eoln = '\0'; //overwrite
+        }
+        
+   	int res = chdir(dir);
+   	
+   	if(res == -1){
+   		printf("Error: Cannot change directory to '%s'. %s. \n", dir, strerror(errno));
+   	}
+   	
+   }
    else if((command[index] == '~' && command[index + 1] != NEWLINE)){ // ~/path entries
    	
     	uid_t uid = getuid(); // Get the user ID of the current user
