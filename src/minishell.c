@@ -268,8 +268,8 @@ int main (){
             INVALID_EXIT: ;
             char * pointer = user_cmd;
             pointer = pointer + index;
+            
             int nl_index;
-
             for(int i = 0; i < PATH_MAX && user_cmd[i] != NEWLINE; i++){ //Replaces all spaces and newlines with '\0'
                 if (user_cmd[i] == SPACE) user_cmd[i] = '\0';
                 if (user_cmd[i+1] == NEWLINE) nl_index = i+1; 
@@ -281,18 +281,55 @@ int main (){
                 fprintf(stderr, "Error: malloc() failed. %s.\n", strerror(errno));
                 return EXIT_FAILURE;
             }
+            
             while((t_index < PATH_MAX / 2) && (index < PATH_MAX)){
                 char * word = user_cmd;
                 word = word + index;
-                
-                if(*word == '\n'){
+                if (index + strlen(word) >= nl_index) word[strlen(word)-1] = '\0';
+                     //printf("Char: %d\n", word[strlen(word)]);
+                if((tokens[t_index] = (char *) malloc(strlen(word) + 1)) == NULL){ //Malloc size of tokens
+                    fprintf(stderr, "Error: malloc() failed. %s.\n", strerror(errno));
+                    return EXIT_FAILURE;
+                }  
+                strcpy(tokens[t_index], word);
+                if(index + strlen(word) < nl_index){
+                    index = index + strlen(word);
+                    while(user_cmd[index] == '\0') index++; //Incriments user_cmd to the next token
+                    t_index ++;
+                }else{
+                    tokens[t_index + 1] = NULL;
+                    break;
+                }
+                }
+                /*
+                if(index == nl_index){
                     if((tokens[t_index] = (char *) malloc(1)) == NULL){ //Malloc size of tokens
                         fprintf(stderr, "Error: malloc() failed. %s.\n", strerror(errno));
                         return EXIT_FAILURE;
                     }
-                     strcpy(tokens[t_index], "");
+                    strcpy(tokens[t_index], "");
                     break;
                 }else{
+                    //printf("Char: %d, Word: %d\n", word[strlen(word)-1], word[strlen(word)]);
+                    //printf("Index: %d nl_index: %d Word_len: %ld\n", index, nl_index, strlen(word));
+                    if (index + strlen(word) >= nl_index) word[strlen(word)-1] = '\0';
+                     //printf("Char: %d\n", word[strlen(word)]);
+                    if((tokens[t_index] = (char *) malloc(strlen(word) + 1)) == NULL){ //Malloc size of tokens
+                        fprintf(stderr, "Error: malloc() failed. %s.\n", strerror(errno));
+                        return EXIT_FAILURE;
+                    }  
+                    strcpy(tokens[t_index], word);
+                    if(index + strlen(word) < nl_index){
+                        index = index + strlen(word);
+                        while(user_cmd[index] == '\0') index++; //Incriments user_cmd to the next token
+                        t_index ++;
+                    }else{
+                        tokens[t_index + 1] = NULL;
+                        index = nl_index;
+                    }
+                    
+
+                    
                     //printf("Char: %d, Word: %s\n", word[0], word);
                     if((tokens[t_index] = (char *) malloc(strlen(word) + 1)) == NULL){ //Malloc size of tokens
                         fprintf(stderr, "Error: malloc() failed. %s.\n", strerror(errno));
@@ -311,8 +348,9 @@ int main (){
                     //printf("t_index: %d\n", t_index);
                    
                 }
+                */
                 
-            }
+            
             /*
             for(int j = 0; j < (PATH_MAX/2); j++){
                 if (tokens[j] != 0) printf("Token %d: %s\n", j, tokens[j]);
@@ -331,7 +369,6 @@ int main (){
                 if (waitpid(child_pid, NULL, 0) == -1){//Wait for the child process to terminate
                     fprintf(stderr, "Error: wait() failed. %s.\n", strerror(errno));                 
                 }
-                printf("Inside Parent\n");
                 free_tokens(tokens, t_index);
                 free(user_cmd);
             }
