@@ -30,6 +30,7 @@
 #define LCASE_X 120
 #define LCASE_I 105
 #define LCASE_T 116
+#define QUOTE 34
 
 volatile sig_atomic_t signal_val = 0;
 
@@ -56,6 +57,7 @@ int free_tokens(char** tokens, int size){
  * 
  * int chdir(const char * path) 
  */ 
+
 void cd (char *command, int index, char* cwd){
     
     index = index + 2;
@@ -63,10 +65,32 @@ void cd (char *command, int index, char* cwd){
     
     char *test = &command[index];
     
-    if (strchr(test, ' ') != NULL) { //there are spaces after, indicating multiple arguments
-        	printf("Error: Too many arguments to cd.\n");
-        	return;
+    //EXTRA CREDIT PORTION
+    //simulataneously checks for too many arguments
+    if (command[index] == QUOTE) {  // path is enclosed in double quotes
+            index++;
+            test = &command[index];
+            
+            char *endQuote = strchr(test + 1, QUOTE);
+            if (endQuote == NULL) {
+                if (strchr(test, ' ') != NULL) { //there is not and ending quote, indicating multiple arguments not in quotes
+        		printf("Error: Too many arguments to cd.\n");
+        		return;
+    		}
+    		
+            }
+    		if(*(endQuote + 1) == SPACE){ //there are separate args after the end quote
+    			printf("Error: Too many arguments to cd.\n");
+        		return;
+    		}
+            *endQuote = '\0'; //clear endquote
+    }else{ //there were no quotes present
+    	if (strchr(test, ' ') != NULL) { //there are spaces after, indicating multiple arguments
+        		printf("Error: Too many arguments to cd.\n");
+        		return;
+    	}
     }
+   
     
     if((command[index] == NEWLINE) || (command[index] == '~' && command[index + 1] == NEWLINE)){ // go to ~
     	//printf("only cd \n");
