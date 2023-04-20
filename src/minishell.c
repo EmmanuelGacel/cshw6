@@ -173,7 +173,12 @@ void cd (char *command, int index, char* cwd){
         free(fullpath);
    }
    else if(command[index] == '.' && command[index + 1] == '.'){
-   	
+   	/** Potential bug fix that DOES NOT WORK WITH HIDDEN DIRECOTRIES
+     * If ((command[index + 1] != '\n') || command[index + 1] != ' '){
+     * Error Cannot: cd
+     * continue;
+     * }
+    */
    	//printf(".. portion\n");
    	
    	char *prev;
