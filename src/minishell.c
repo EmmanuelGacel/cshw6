@@ -60,8 +60,6 @@ int free_tokens(char** tokens, int size){
 
 /**
  * Bugs:
- * 1. cd ... --> Invalid command that works (works with n number of dots...)
- * 2. cd directory(SPACE) --> Does not work && prints Error: too many arguments
  * 3. Error: Cannot change directory -> Prints out FULL_PATH instead of DIRECTORY_NAME
  * 4. cd folder1/folder2/ --> Does not work
 */
@@ -86,15 +84,29 @@ void cd (char *command, int index, char* cwd){
     		}
     		
             }
-    		if(*(endQuote + 1) == SPACE){ //there are separate args after the end quote
-    			printf("Error: Too many arguments to cd.\n");
-        		return;
-    		}
+            int i = 1;
+            while(*(endQuote + i) == SPACE){ //skips all remaining spaces
+            	i++;
+            }
+    	    if(*(endQuote + i) != NEWLINE){ //shouldn't be an extra arg
+    		printf("Error: Too many arguments to cd.\n");
+        	return;
+    	    }
             *endQuote = '\0'; //clear endquote
     }else{ //there were no quotes present
-    	if (strchr(test, ' ') != NULL) { //there are spaces after, indicating multiple arguments
+    	
+    	char *sp = strchr(test, ' ');
+    	
+    	if (sp != NULL) { //spaces after directory name
+    		int i = 1;
+    		while(*(sp + i) == SPACE){
+    			i++;
+    		}
+    		if(*(sp + i) != NEWLINE){
         		printf("Error: Too many arguments to cd.\n");
         		return;
+        	}
+        	command[strlen(command) - (i + 1)] = '\0'; //null terminate before the spaces
     	}
     }
    
@@ -143,9 +155,6 @@ void cd (char *command, int index, char* cwd){
         }
         
         char *dir = &command[index + 1]; //get past the '~'
-        //strcat(fullpath, cwd);
-        //strcat(fullpath, "/");
-        //strcat(fullpath, dir);
          
         char *fullpath;
         if ((fullpath = malloc(strlen(pw->pw_dir) + strlen(dir) + 1)) == NULL){ //saves space on heap
@@ -172,7 +181,7 @@ void cd (char *command, int index, char* cwd){
         
         free(fullpath);
    }
-   else if(command[index] == '.' && command[index + 1] == '.'){
+   else if(command[index] == '.' && command[index + 1] == '.' && (command[index + 2] == SPACE || command[index + 2] == NEWLINE)){
    	/** Potential bug fix that DOES NOT WORK WITH HIDDEN DIRECOTRIES
      * If ((command[index + 1] != '\n') || command[index + 1] != ' '){
      * Error Cannot: cd
@@ -254,6 +263,10 @@ int main (){
 		catch_signal(SIGINT);
     }
     
+    if(setvbuf(stdin, NULL, _IONBF, 0) != 0){
+    	printf("Error: setvbuf failed. %s. \n", strerror(errno));
+    	return EXIT_FAILURE;
+    }
     
     while (true){ //While true keep printing the command line
         //Stores the cd inside the $current_working_directory buffer
