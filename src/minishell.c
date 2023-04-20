@@ -60,9 +60,10 @@ int free_tokens(char** tokens, int size){
 
 /**
  * Bugs:
- * 1. cd ...
- * 2. cd directory(SPACE)
+ * 1. cd ... --> Invalid command that works (works with n number of dots...)
+ * 2. cd directory(SPACE) --> Does not work && prints Error: too many arguments
  * 3. Error: Cannot change directory -> Prints out FULL_PATH instead of DIRECTORY_NAME
+ * 4. cd folder1/folder2/ --> Does not work
 */
 void cd (char *command, int index, char* cwd){
     
