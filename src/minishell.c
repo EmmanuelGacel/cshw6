@@ -58,6 +58,12 @@ int free_tokens(char** tokens, int size){
  * int chdir(const char * path) 
  */ 
 
+/**
+ * Bugs:
+ * 1. cd ...
+ * 2. cd directory(SPACE)
+ * 3. Error: Cannot change directory -> Prints out FULL_PATH instead of DIRECTORY_NAME
+*/
 void cd (char *command, int index, char* cwd){
     
     index = index + 2;
@@ -297,7 +303,6 @@ int main (){
             //cd(user_cmd); //calls function to deal with cd
         }else if ((user_cmd[index] == LCASE_E) && (user_cmd[index + 1] == LCASE_X)  //Checks for "exit" command
         && (user_cmd[index + 2] == LCASE_I) && (user_cmd[index + 3] == LCASE_T)){
-            printf("Inside exit if statment \n");
             
             //If not a ' ' character and if not a '\n' character move on to exec.
             if (user_cmd[index + 4] != SPACE &&  user_cmd[index + 4] != NEWLINE){
@@ -343,62 +348,8 @@ int main (){
                     tokens[t_index + 1] = NULL;
                     break;
                 }
-                }
-                /*
-                if(index == nl_index){
-                    if((tokens[t_index] = (char *) malloc(1)) == NULL){ //Malloc size of tokens
-                        fprintf(stderr, "Error: malloc() failed. %s.\n", strerror(errno));
-                        return EXIT_FAILURE;
-                    }
-                    strcpy(tokens[t_index], "");
-                    break;
-                }else{
-                    //printf("Char: %d, Word: %d\n", word[strlen(word)-1], word[strlen(word)]);
-                    //printf("Index: %d nl_index: %d Word_len: %ld\n", index, nl_index, strlen(word));
-                    if (index + strlen(word) >= nl_index) word[strlen(word)-1] = '\0';
-                     //printf("Char: %d\n", word[strlen(word)]);
-                    if((tokens[t_index] = (char *) malloc(strlen(word) + 1)) == NULL){ //Malloc size of tokens
-                        fprintf(stderr, "Error: malloc() failed. %s.\n", strerror(errno));
-                        return EXIT_FAILURE;
-                    }  
-                    strcpy(tokens[t_index], word);
-                    if(index + strlen(word) < nl_index){
-                        index = index + strlen(word);
-                        while(user_cmd[index] == '\0') index++; //Incriments user_cmd to the next token
-                        t_index ++;
-                    }else{
-                        tokens[t_index + 1] = NULL;
-                        index = nl_index;
-                    }
-                    
-
-                    
-                    //printf("Char: %d, Word: %s\n", word[0], word);
-                    if((tokens[t_index] = (char *) malloc(strlen(word) + 1)) == NULL){ //Malloc size of tokens
-                        fprintf(stderr, "Error: malloc() failed. %s.\n", strerror(errno));
-                        return EXIT_FAILURE;
-                    }
-                    strcpy(tokens[t_index], word); 
-                    if((index + strlen(word)) < nl_index){
-                        index = index + strlen(word);
-                        while(user_cmd[index] == '\0') index++; //Incriments user_cmd to the next token
-                    } else{
-                        tokens[t_index][strlen(word) -1 ] = '\0';
-                        index = nl_index;
-                    }
-                    t_index ++;//Incriments the token array.
-                    //printf("Index: %d\n", index);
-                    //printf("t_index: %d\n", t_index);
-                   
-                }
-                */
-                
-            
-            /*
-            for(int j = 0; j < (PATH_MAX/2); j++){
-                if (tokens[j] != 0) printf("Token %d: %s\n", j, tokens[j]);
             }
-            */
+            
             pid_t child_pid;
             if ((child_pid = fork()) < 0){
                 fprintf(stderr, "Error: fork() failed. %s.\n", strerror(errno));
@@ -407,7 +358,7 @@ int main (){
                     fprintf(stderr, "Error: exec() failed. %s.\n", strerror(errno));
                     return EXIT_FAILURE;
                 }
-            }else if (child_pid > 0){
+            }else if (child_pid > 0){//Parent
                 
                 if (waitpid(child_pid, NULL, 0) == -1){//Wait for the child process to terminate
                     fprintf(stderr, "Error: wait() failed. %s.\n", strerror(errno));                 
@@ -417,14 +368,7 @@ int main (){
             }
 
         }
-        
-        
-        //printf("Made It!!! \n");
-
-        
-
-        //printf("\n%s", user_cmd);SSSSSS
-        //scanf("%s", user_cmd);
+       
     }
     END:
         return EXIT_SUCCESS;
