@@ -203,7 +203,6 @@ void cd (char *command, int index, char* cwd){
     	while (i >= 0 && prev[i] != '/') {
         		i--;
     	}
-    
     	if (i >= 0) { 		
         	   prev[i] = '\0';
     	}
@@ -250,14 +249,10 @@ void cd (char *command, int index, char* cwd){
 
 
 int main (){
-    
-    
     char current_working_directory[PATH_MAX];
-    
     struct sigaction action;
     memset(&action, 0, sizeof(struct sigaction));
-    action.sa_handler = catch_signal;
-    
+    action.sa_handler = catch_signal; 
     if (sigaction(SIGINT, &action, NULL) == -1) {
 		perror("sigaction(SIGINT)");
 		catch_signal(SIGINT);
@@ -269,14 +264,13 @@ int main (){
     }
     
     while (true){ //While true keep printing the command line
-        //Stores the cd inside the $current_working_directory buffer
         
         if (signal_val == 1) { //is true
-		//printf("inside sigint statement");
-		signal_val = 0;
-		printf("\n");
-		continue;
-	}
+            signal_val = 0;
+            clearerr(stdin);//Clears stdin so that fgets can read next user cmd
+            //goto INTERRUPTED_SIGNAL;
+            continue;
+	    }
         
         if(getcwd(current_working_directory, PATH_MAX) == NULL){
             fprintf(stderr, "Error: Cannot get current working directory. %s.\n", strerror(errno));
@@ -295,7 +289,7 @@ int main (){
         //Stores the user input into $user_cmd buffer
         if (fgets(user_cmd, PATH_MAX, stdin) == NULL){
            if(signal_val == 1){ //CHECKS FOR A SIGNAL AFTER READING
-           	continue;
+            continue;
            } 
            if (errno == EINTR){
                 printf("Read interrupted. \n");
@@ -309,7 +303,6 @@ int main (){
             printf("\n");
             return EXIT_FAILURE;
         }
-
         int index = 0;
         while (user_cmd[index] == SPACE) index ++; //Skips any spaces before a command
         
@@ -380,14 +373,14 @@ int main (){
             }else if (child_pid > 0){//Parent
                 
                 if (waitpid(child_pid, NULL, 0) == -1){//Wait for the child process to terminate
-                    fprintf(stderr, "Error: wait() failed. %s.\n", strerror(errno));                 
+                    if (errno != EINTR) fprintf(stderr, "Error: wait() failed. %s.\n", strerror(errno));                 
                 }
                 free_tokens(tokens, t_index);
                 free(user_cmd);
             }
-
+            
         }
-       
+          
     }
     END:
         return EXIT_SUCCESS;
