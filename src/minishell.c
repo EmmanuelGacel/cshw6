@@ -302,8 +302,13 @@ int main (){
             printf("\n");
             return EXIT_FAILURE;
         }
+        
         int index = 0;
         while (user_cmd[index] == SPACE) index ++; //Skips any spaces before a command
+        
+        if(user_cmd[index] == NEWLINE){ //just an enter
+        	continue;
+        }
         
         //Checks for "cd" command
         if ((user_cmd[index] == LCASE_C) && (user_cmd[index + 1] == LCASE_D) && ((user_cmd[index + 2] == NEWLINE) || (user_cmd[index + 2] == ' '))){
