@@ -326,6 +326,9 @@ int main (){
             }
         }else{
             INVALID_EXIT: ;
+            if (user_cmd[index] == NEWLINE && user_cmd[index + 1] == '\0'){
+                continue;
+            }
             char * pointer = user_cmd;
             pointer = pointer + index;
             
