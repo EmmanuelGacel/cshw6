@@ -1,10 +1,10 @@
 /*******************************************************************************
- * Name          :
- * Author        :
+ * Name          : Minishell
+ * Author        : Kathrine Wimmer & Emmanuel Gacel
  * Version       :
- * Date          :
+ * Date          : 04/20/2023
  * Last Modified :
- * Description   : 
+ * Description   : This program simulates a minishell.
 *******************************************************************************/
 #include <ctype.h>
 #include <errno.h>
@@ -34,14 +34,19 @@
 
 volatile sig_atomic_t signal_val = 0;
 
-
+/**
+ * Catches the SIGINT signal;
+*/
 void catch_signal(int sig){
 	if(sig == SIGINT){
 		signal_val = 1;
 		printf("\n");
 	}
 }
-
+/**
+ * Frees the tokenized user arguments.
+ * Returns EXIT_SUCCESS
+*/
 int free_tokens(char** tokens, int size){
     int index = size;
     while (index >= 0){
@@ -53,16 +58,10 @@ int free_tokens(char** tokens, int size){
 }
 
 /**
- * Incomplete CD function
- * 
- * int chdir(const char * path) 
+ * Function that changes directory upon receiving the "cd" command. If an invalid
+ * command is entered the program prints out the corresponding error message.
  */ 
 
-/**
- * Bugs:
- * 3. Error: Cannot change directory -> Prints out FULL_PATH instead of DIRECTORY_NAME
- * 4. cd folder1/folder2/ --> Does not work
-*/
 void cd (char *command, int index, char* cwd){
     
     index = index + 2;
@@ -182,14 +181,6 @@ void cd (char *command, int index, char* cwd){
         free(fullpath);
    }
    else if(command[index] == '.' && command[index + 1] == '.' && (command[index + 2] == SPACE || command[index + 2] == NEWLINE)){
-   	/** Potential bug fix that DOES NOT WORK WITH HIDDEN DIRECOTRIES
-     * If ((command[index + 1] != '\n') || command[index + 1] != ' '){
-     * Error Cannot: cd
-     * continue;
-     * }
-    */
-   	//printf(".. portion\n");
-   	
    	char *prev;
    	
    	if ((prev = malloc(strlen(cwd) + 1)) == NULL){ //saves space on heap
@@ -247,7 +238,15 @@ void cd (char *command, int index, char* cwd){
     }
 }
 
-
+/**
+ * This method simulates a minishell by using a while(true) loop. Each iteration
+ * of the loop begeins with printing the cwd. If the user inputs "cd" the cd() 
+ * function is called. If the user inputs "exit" the shell exits appropriately. 
+ * Finally if the user inputs anything else the program forks a child and 
+ * exec()s the command.
+ * 
+ * Returns integer upon success or failure.
+*/
 int main (){
     char current_working_directory[PATH_MAX];
     struct sigaction action;
@@ -371,7 +370,6 @@ int main (){
             }else if (child_pid == 0){//Child process
                 if (execvp(tokens[0], tokens) == -1){//Execvp command using tokens array
                     fprintf(stderr, "Error: exec() failed. %s.\n", strerror(errno));
-                    return EXIT_FAILURE;
                 }
             }else if (child_pid > 0){//Parent
                 
