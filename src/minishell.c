@@ -370,6 +370,7 @@ int main (){
             }else if (child_pid == 0){//Child process
                 if (execvp(tokens[0], tokens) == -1){//Execvp command using tokens array
                     fprintf(stderr, "Error: exec() failed. %s.\n", strerror(errno));
+                    return EXIT_FAILURE;
                 }
             }else if (child_pid > 0){//Parent
                 
